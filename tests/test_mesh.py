@@ -180,7 +180,10 @@ def test_sharded_paint_read():
             ref_data = ParticleField(ref_data.positions, ref_data.weights, attrs=mattrs, exchange=False)
             ref_weights = f(ref_data, ref_randoms.positions)
             assert np.allclose(ref_randoms.weights, rweights)
-            assert np.allclose(weights, ref_weights)
+            # Distributed halo accumulation is not bit-identical to a single
+            # allgathered float32 sum; NGP is exact, CIC/TSC/PCS differ at
+            # the ~1e-6 level.  Keep a float32-appropriate tolerance.
+            assert np.allclose(weights, ref_weights, rtol=1e-4, atol=1e-6)
 
 
 def test_paint_jit():
